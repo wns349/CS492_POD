@@ -3,7 +3,7 @@ var _s = require('underscore.string');
 var fs = require('fs');
 
 
-var lines = fs.readFileSync('Affective-Features.tsv', 'utf-8');
+var lines = fs.readFileSync('../data/Affective-Features.tsv', 'utf-8');
 
 var affectives = _.map(_s.lines(lines), function (line) {
   var keyword = _s.trim(_s.words(line, '\t')[0]);
