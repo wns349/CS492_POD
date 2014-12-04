@@ -1,15 +1,15 @@
 package cs492.pod.parser.schema;
 
-public class AuthorDocReview {
+public class AuthorDocSymptom {
   private int authorId;
   private int docId;
-  private String post;
+  private String[] symptoms;
 
-  public AuthorDocReview(int authorId, int docId, String post) {
+  public AuthorDocSymptom(int authorId, int docId, String... symptoms) {
     super();
     this.authorId = authorId;
     this.docId = docId;
-    this.post = post;
+    this.symptoms = symptoms;
   }
 
   public int getAuthorId() {
@@ -28,12 +28,12 @@ public class AuthorDocReview {
     this.docId = docId;
   }
 
-  public String getPost() {
-    return post;
+  public String[] getSymptoms() {
+    return symptoms;
   }
 
-  public void setPost(String post) {
-    this.post = post;
+  public void setSymptoms(String... symptoms) {
+    this.symptoms = symptoms;
   }
 
 }

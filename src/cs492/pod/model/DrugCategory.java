@@ -40,4 +40,23 @@ public enum DrugCategory {
     }
     return null;
   }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+
+    sb.append(this.name());
+    sb.append("(");
+
+    for (int i = 0; i < drugs.length; i++) {
+      sb.append(drugs[i]);
+      if (i + 1 < drugs.length) {
+        sb.append(",");
+      }
+    }
+
+    sb.append(")");
+
+    return sb.toString();
+  }
 }

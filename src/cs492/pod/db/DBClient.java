@@ -11,6 +11,8 @@ import org.apache.logging.log4j.Logger;
 import cs492.pod.parser.schema.AffectiveFeature;
 import cs492.pod.parser.schema.AuthorDetail;
 import cs492.pod.parser.schema.AuthorDocReview;
+import cs492.pod.parser.schema.AuthorDocSymptom;
+import cs492.pod.parser.schema.SpecificDrugSideEffect;
 
 public class DBClient {
   private static final String DB_NAME = "POD";
@@ -117,11 +119,11 @@ public class DBClient {
     try {
       pstmt = connect.prepareStatement(query);
       pstmt.setInt(1, authorDocReview.getAuthorId());
-      pstmt.setInt(2, authorDocReview.getDoctorId());
+      pstmt.setInt(2, authorDocReview.getDocId());
       pstmt.setString(3, authorDocReview.getPost());
-      
+
       pstmt.executeUpdate();
-      
+
       this.connect.commit();
     } finally {
       if (pstmt != null) {
@@ -130,7 +132,7 @@ public class DBClient {
     }
   }
 
-  public void addAuthorDetail(AuthorDetail authorDetail) throws Exception{
+  public void addAuthorDetail(AuthorDetail authorDetail) throws Exception {
     if (authorDetail == null) {
       logger.error("AuthorDetail is null.");
       return;
@@ -147,17 +149,75 @@ public class DBClient {
       pstmt.setString(3, authorDetail.getLocation());
       pstmt.setInt(4, authorDetail.getPostCount());
       pstmt.setString(5, authorDetail.getMembershipType());
-      pstmt.setInt(6 , authorDetail.getQuestionCount());
+      pstmt.setInt(6, authorDetail.getQuestionCount());
       pstmt.setInt(7, authorDetail.getReplyCount());
       pstmt.setInt(8, authorDetail.getThankCount());
-      
+
       pstmt.executeUpdate();
-      
+
       this.connect.commit();
     } finally {
       if (pstmt != null) {
         pstmt.close();
       }
-    }    
+    }
+  }
+
+  public PreparedStatement createAuthorDocSymptom() throws SQLException {
+
+    String query = "INSERT INTO author_doc_symptoms (author_id, doc_id, symptom) VALUES "
+        + "(?, ?, ?) ";
+
+    return connect.prepareStatement(query);
+  }
+
+  public void addAuthorDocSymptom(PreparedStatement pstmt,
+      AuthorDocSymptom authorDocSymptom) throws Exception {
+    if (authorDocSymptom == null) {
+      logger.error("AuthorDocSymptom is null.");
+      return;
+    }
+
+    for (String symptom : authorDocSymptom.getSymptoms()) {
+      pstmt.setInt(1, authorDocSymptom.getAuthorId());
+      pstmt.setInt(2, authorDocSymptom.getDocId());
+      pstmt.setString(3, symptom);
+
+      pstmt.addBatch();
+    }
+
+  }
+
+  public void commit() throws SQLException {
+    this.connect.commit();
+  }
+
+  public void addSpecificDrugSideEffect(SpecificDrugSideEffect v)
+      throws Exception {
+    if (v == null) {
+      logger.error("SpecificDrugSideEffect is null.");
+      return;
+    }
+
+    String query = "INSERT INTO specific_drug_side_effects (author_id, doc_id, symptom, frequency, type) VALUES "
+        + "(?, ?, ?, ?, ?) ";
+    PreparedStatement pstmt = null;
+
+    try {
+      pstmt = connect.prepareStatement(query);
+      pstmt.setInt(1, v.getAuthorId());
+      pstmt.setInt(2, v.getDocId());
+      pstmt.setString(3, v.getSymptom());
+      pstmt.setInt(4, v.getFrequency());
+      pstmt.setString(5, v.getType());
+
+      pstmt.executeUpdate();
+
+      this.connect.commit();
+    } finally {
+      if (pstmt != null) {
+        pstmt.close();
+      }
+    }
   }
 }

@@ -44,7 +44,7 @@ public class ExpertDrugSideEffectsValidator {
         logger.info("tokens length: " + tokens.length);
         String[] drugs = tokens[0].trim().split(",");
         String severity = tokens[1].trim();
-        String sideEffects = tokens[2].trim();
+        String sideEffects = tokens[3].trim();
 
         if (sideEffects
             .substring(sideEffects.indexOf('[') + 1, sideEffects.indexOf(']'))
@@ -57,9 +57,16 @@ public class ExpertDrugSideEffectsValidator {
           drug = drug.trim();
           DrugCategory category = DrugCategory.getDrugCategory(drug);
           if (category != null) {
-            result[category.ordinal()][Severity.getSeverity(severity).ordinal()] += sideEffects
-                .split(",").length;
-            isAdded = true;
+            String[] sideEffectTokens = sideEffects.split("#");
+            for (String sideEffectToken : sideEffectTokens) {
+              sideEffectToken = ltrim(sideEffectToken);
+              sideEffectToken = rtrim(sideEffectToken);
+              if (!sideEffectToken.trim().isEmpty()) {
+                result[category.ordinal()][Severity.getSeverity(severity)
+                    .ordinal()]++;
+                isAdded = true;
+              }
+            }
           } else {
             logger.debug("category is null:" + drug);
           }
@@ -82,6 +89,22 @@ public class ExpertDrugSideEffectsValidator {
             + Severity.getByOrdinal(j) + " = " + result[i][j]);
       }
     }
+  }
+
+  public static String ltrim(String s) {
+    int i = 0;
+    while (i < s.length() && Character.isWhitespace(s.charAt(i))) {
+      i++;
+    }
+    return s.substring(i);
+  }
+
+  public static String rtrim(String s) {
+    int i = s.length() - 1;
+    while (i >= 0 && Character.isWhitespace(s.charAt(i))) {
+      i--;
+    }
+    return s.substring(0, i + 1);
   }
 
   public static void main(String[] args) throws Exception {

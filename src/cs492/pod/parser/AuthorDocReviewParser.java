@@ -36,10 +36,10 @@ public class AuthorDocReviewParser implements Parser {
         if (!line.isEmpty()) {
           String[] tokens = line.split("\t");
           int authorId = Integer.parseInt(tokens[0].trim());
-          int doctorId = Integer.parseInt(tokens[1].trim());
+          int docId = Integer.parseInt(tokens[1].trim());
           String post = tokens[2].trim();
 
-          AuthorDocReview instance = new AuthorDocReview(authorId, doctorId,
+          AuthorDocReview instance = new AuthorDocReview(authorId, docId,
               post);
 
           logger.debug(instance.toString());
