@@ -3,6 +3,7 @@ package cs492.pod.db;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.apache.logging.log4j.LogManager;
@@ -13,6 +14,7 @@ import cs492.pod.parser.schema.AuthorDetail;
 import cs492.pod.parser.schema.AuthorDocReview;
 import cs492.pod.parser.schema.AuthorDocSymptom;
 import cs492.pod.parser.schema.SpecificDrugSideEffect;
+import cs492.pod.statement.SideEffectStatement.SpecificDrugSideEffectSelectHandler;
 
 public class DBClient {
   private static final String DB_NAME = "POD";
@@ -219,5 +221,48 @@ public class DBClient {
         pstmt.close();
       }
     }
+  }
+
+  public PreparedStatement createSpecificDrugSideEffectUpdateMoreCommon()
+      throws Exception {
+    String query = "UPDATE specific_drug_side_effects SET is_more_common = ? "
+        + "WHERE author_id = ? AND doc_id = ? AND symptom = ? AND type = ?";
+    return connect.prepareStatement(query);
+  }
+
+  public ResultSet selectSpecificDrugSideEffect(String drugName,
+      SpecificDrugSideEffectSelectHandler handler) throws Exception {
+    String query = "SELECT * FROM specific_drug_side_effects WHERE type = ?";
+    PreparedStatement pstmt = null;
+    ResultSet rs = null;
+
+    PreparedStatement pstmtUpdate = createSpecificDrugSideEffectUpdateMoreCommon();
+    try {
+      pstmt = connect.prepareStatement(query);
+      pstmt.setString(1, drugName);
+
+      rs = pstmt.executeQuery();
+
+      if (handler != null) {
+        handler.handle(pstmtUpdate, rs);
+        handler.onHandleFinish(pstmtUpdate);
+      }
+
+    } finally {
+
+      if (rs != null && !rs.isClosed()) {
+        rs.close();
+      }
+
+      if (pstmt != null && !pstmt.isClosed()) {
+        pstmt.close();
+      }
+
+      if (pstmtUpdate != null && !pstmtUpdate.isClosed()) {
+        pstmtUpdate.close();
+      }
+    }
+
+    return rs;
   }
 }
