@@ -4,6 +4,7 @@ var _ = require('underscore');
 var _s = require('underscore.string');
 var util = require('util');
 var cluster = require('cluster');
+var pos = require('pos');
 
 var connection = mysql.createConnection({
   host     : '143.248.49.97',
@@ -30,8 +31,9 @@ if (cluster.isMaster) {
   //connection.query('SELECT * FROM pod.author_doc_review LIMIT ?, ?', [1, 2], function(err, reviews, fields) {
     async.eachLimit(reviews, 1000, function (review, callback) {
       count++;
-      var words = _.map(_s.words(review.post, /[!@#$%^&*()\-_=+\[\]\{\}\\\|\;\:\'\"\,\<\.\>\/\?\s]/), function (w) { return w.toLowerCase(); });
+      var words = _.map(new pos.Lexer().lex(review.post), function (w) { return w.toLowerCase(); });
       var wordsCount = _.countBy(words);
+      var postLength = words.length;
 
       connection.query('SELECT * FROM pod.affective_features WHERE word IN (?)', _.map(_.uniq(words), function (word) { return word.toLowerCase(); }), function (err, features, fields) {
         if (_.isEmpty(features)) {
@@ -50,7 +52,7 @@ if (cluster.isMaster) {
 
         //console.log(review.author_id, review.doc_id, features);
 
-        connection.query('INSERT INTO pod.affective_feature_values VALUES ' + connection.escape(_.map(features, function (f) { return [review.author_id, review.doc_id, f.feature, f.frequency, review.post.length]; })), function (err, result) {
+        connection.query('INSERT INTO pod.affective_feature_values VALUES ' + connection.escape(_.map(features, function (f) { return [review.author_id, review.doc_id, f.feature, f.frequency, postLength]; })), function (err, result) {
           console.log(process.pid, JSON.stringify(err), 'result:', review.author_id, review.doc_id, _.isEmpty(result) ? 'null' : result.affectedRows, connection.escape(_.map(features, function (f) { return [review.author_id, review.doc_id, f.feature, f.frequency, review.post.length]; })));
           callback();
         });
