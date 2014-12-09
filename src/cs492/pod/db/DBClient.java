@@ -9,6 +9,8 @@ import java.sql.SQLException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import cs492.pod.feature.UserFeature.OnSelectUsersHandler;
+import cs492.pod.feature.UserSentenceFeature.OnAuthorDocReviewHandler;
 import cs492.pod.parser.schema.AffectiveFeature;
 import cs492.pod.parser.schema.AuthorDetail;
 import cs492.pod.parser.schema.AuthorDocReview;
@@ -230,7 +232,7 @@ public class DBClient {
     return connect.prepareStatement(query);
   }
 
-  public ResultSet selectSpecificDrugSideEffect(String drugName,
+  public void selectSpecificDrugSideEffect(String drugName,
       SpecificDrugSideEffectSelectHandler handler) throws Exception {
     String query = "SELECT * FROM specific_drug_side_effects WHERE type = ?";
     PreparedStatement pstmt = null;
@@ -263,6 +265,91 @@ public class DBClient {
       }
     }
 
-    return rs;
+  }
+
+  public void selectUsers(OnSelectUsersHandler handler) throws Exception {
+    String query = "SELECT * FROM author_detail";
+    String queryInsert = "INSERT INTO author_feature_values (author_id, type, value) VALUES (?, ?, ?)";
+    PreparedStatement pstmt = null;
+    ResultSet rs = null;
+    PreparedStatement pstmtInsert = null;
+    try {
+      pstmt = connect.prepareStatement(query);
+      pstmtInsert = connect.prepareStatement(queryInsert);
+      rs = pstmt.executeQuery();
+
+      if (handler != null) {
+        handler.handle(pstmtInsert, rs);
+      }
+
+    } finally {
+
+      if (rs != null && !rs.isClosed()) {
+        rs.close();
+      }
+
+      if (pstmt != null && !pstmt.isClosed()) {
+        pstmt.close();
+      }
+
+      if (pstmtInsert != null && !pstmtInsert.isClosed()) {
+        pstmtInsert.close();
+      }
+    }
+  }
+
+  public void selectAuthorDocReview(OnAuthorDocReviewHandler handler)
+      throws Exception {
+    String query = "SELECT * FROM author_doc_review WHERE author_id = ?";
+    String queryAuthorDetail = "SELECT author_id FROM author_detail";
+    String queryInsert = "INSERT INTO author_feature_values (author_id, type, value) VALUES (?, ?, ?)";
+    PreparedStatement pstmt = null;
+    PreparedStatement pstmtAuthorDetail = null;
+    ResultSet rs = null;
+    ResultSet rsAuthorDetail = null;
+    PreparedStatement pstmtInsert = null;
+    try {
+      pstmt = connect.prepareStatement(query);
+      pstmtInsert = connect.prepareStatement(queryInsert);
+      pstmtAuthorDetail = connect.prepareStatement(queryAuthorDetail);
+
+      rsAuthorDetail = pstmtAuthorDetail.executeQuery();
+
+      while (rsAuthorDetail.next()) {
+        int authorId = rsAuthorDetail.getInt("author_id");
+        pstmt.setInt(1, authorId);
+        rs = pstmt.executeQuery();
+
+        if (handler != null) {
+          handler.handle(rs);
+        }
+
+        rs.close();
+      }
+
+      if (handler != null) {
+        handler.handleFinish(pstmtInsert);
+      }
+    } finally {
+
+      if (rs != null && !rs.isClosed()) {
+        rs.close();
+      }
+      if (rsAuthorDetail != null && !rsAuthorDetail.isClosed()) {
+        rsAuthorDetail.close();
+      }
+
+      if (pstmt != null && !pstmt.isClosed()) {
+        pstmt.close();
+      }
+
+      if (pstmtAuthorDetail != null && !pstmtAuthorDetail.isClosed()) {
+        pstmtAuthorDetail.close();
+      }
+
+      if (pstmtInsert != null && !pstmtInsert.isClosed()) {
+        pstmtInsert.close();
+      }
+    }
   }
 }
