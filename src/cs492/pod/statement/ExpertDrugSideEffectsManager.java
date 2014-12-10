@@ -49,7 +49,7 @@ public class ExpertDrugSideEffectsManager {
         String[] tokens = line.split("\t");
         String[] drugs = tokens[0].trim().split(",");
         String severity = tokens[1].trim();
-        String sideEffects = tokens[3].trim();
+        String sideEffects = tokens[2].trim();
 
         if (sideEffects
             .substring(sideEffects.indexOf('[') + 1, sideEffects.indexOf(']'))
@@ -101,8 +101,17 @@ public class ExpertDrugSideEffectsManager {
     if (answer == null || answer.isEmpty()) {
       return false;
     } else {
-      return answer.toLowerCase().trim()
-          .contains(sideEffect.toLowerCase().trim());
+
+      String[] tokens = sideEffect.split(" ");
+      boolean isSideEffect = false;
+      for (String token : tokens) {
+        isSideEffect = answer.toLowerCase().trim()
+            .contains(token.toLowerCase().trim());
+        if (isSideEffect) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 }

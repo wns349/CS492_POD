@@ -11,7 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import cs492.pod.db.DBClient;
-import cs492.pod.feature.UserFeature.FeatureType;
+import cs492.pod.model.UserFeatureType;
 import edu.stanford.nlp.process.DocumentPreprocessor;
 
 public class UserSentenceFeature {
@@ -65,17 +65,19 @@ public class UserSentenceFeature {
               Bean bean = entry.getValue();
               String avgWordsPerSentence = bean.avgWordsPerSentence();
               String avgSentencesPerPost = bean.avgSentencesPerPost();
-              
+
               logger.debug("{} {} {} {}", authorId, bean, avgWordsPerSentence,
                   avgSentencesPerPost);
 
               pstmtInsert.setInt(1, authorId);
-              pstmtInsert.setString(2, FeatureType.AvgWordsPerSentence.name());
+              pstmtInsert.setString(2,
+                  UserFeatureType.AvgWordsPerSentence.name());
               pstmtInsert.setString(3, avgWordsPerSentence);
               pstmtInsert.addBatch();
 
               pstmtInsert.setInt(1, authorId);
-              pstmtInsert.setString(2, FeatureType.AvgSentencesPerPost.name());
+              pstmtInsert.setString(2,
+                  UserFeatureType.AvgSentencesPerPost.name());
               pstmtInsert.setString(3, avgSentencesPerPost);
               pstmtInsert.addBatch();
 

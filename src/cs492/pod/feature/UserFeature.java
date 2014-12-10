@@ -8,14 +8,11 @@ import org.apache.logging.log4j.Logger;
 
 import cs492.pod.db.DBClient;
 import cs492.pod.model.Author;
+import cs492.pod.model.UserFeatureType;
 
 public class UserFeature {
   private final Logger logger = LogManager.getLogger(UserFeature.class
       .getSimpleName());
-
-  enum FeatureType {
-    Gender, QRRatio, AvgThankPerReply, MembershipType, AvgWordsPerSentence, AvgSentencesPerPost
-  }
 
   public void start() throws Exception {
 
@@ -64,7 +61,7 @@ public class UserFeature {
       private int insertMembershipType(PreparedStatement pstmtInsert,
           Author author) throws Exception {
         pstmtInsert.setInt(1, author.getAuthorId());
-        pstmtInsert.setString(2, FeatureType.MembershipType.name());
+        pstmtInsert.setString(2, UserFeatureType.MembershipType.name());
         pstmtInsert.setString(3, author.getMembershipType());
         pstmtInsert.addBatch();
 
@@ -84,7 +81,7 @@ public class UserFeature {
         }
 
         pstmtInsert.setInt(1, author.getAuthorId());
-        pstmtInsert.setString(2, FeatureType.AvgThankPerReply.name());
+        pstmtInsert.setString(2, UserFeatureType.AvgThankPerReply.name());
         pstmtInsert.setString(3, ans);
         pstmtInsert.addBatch();
 
@@ -104,7 +101,7 @@ public class UserFeature {
         }
 
         pstmtInsert.setInt(1, author.getAuthorId());
-        pstmtInsert.setString(2, FeatureType.QRRatio.name());
+        pstmtInsert.setString(2, UserFeatureType.QRRatio.name());
         pstmtInsert.setString(3, ans);
         pstmtInsert.addBatch();
 
@@ -114,7 +111,7 @@ public class UserFeature {
       private int insertGender(PreparedStatement pstmtInsert, Author author)
           throws Exception {
         pstmtInsert.setInt(1, author.getAuthorId());
-        pstmtInsert.setString(2, FeatureType.Gender.name());
+        pstmtInsert.setString(2, UserFeatureType.Gender.name());
         pstmtInsert.setString(3, author.getGender());
 
         pstmtInsert.addBatch();

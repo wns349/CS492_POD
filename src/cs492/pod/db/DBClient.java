@@ -196,6 +196,10 @@ public class DBClient {
     this.connect.commit();
   }
 
+  public Connection getConnection() {
+    return this.connect;
+  }
+
   public void addSpecificDrugSideEffect(SpecificDrugSideEffect v)
       throws Exception {
     if (v == null) {
