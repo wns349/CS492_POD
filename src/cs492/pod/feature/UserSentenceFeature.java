@@ -110,18 +110,20 @@ public class UserSentenceFeature {
     public double posts = 0;
 
     public String avgSentencesPerPost() throws Exception {
+      final double NORM = 10.0;
       try {
-        return String.format("%.5f", (sentences / posts));
+        return String.format("%.5f", (sentences / posts)/NORM);
       } catch (Exception e) {
-        return "NaN";
+        return "0";
       }
     }
 
     public String avgWordsPerSentence() {
+      final double NORM = 100.0;
       try {
-        return String.format("%.5f", (words / sentences));
+        return String.format("%.5f", (words / sentences)/NORM);
       } catch (Exception e) {
-        return "NaN";
+        return "0";
       }
     }
 

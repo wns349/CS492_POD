@@ -32,16 +32,16 @@ public class UserFeature {
           Author author = new Author(rs);
 
           // Gender
-          pstmtInsertCount += insertGender(pstmtInsert, author);
+        //  pstmtInsertCount += insertGender(pstmtInsert, author);
 
           // QRRatio
-          pstmtInsertCount += insertQRRatio(pstmtInsert, author);
+        //  pstmtInsertCount += insertQRRatio(pstmtInsert, author);
 
           // AvgThankPerReply
           pstmtInsertCount += insertAvgThankPerReply(pstmtInsert, author);
 
           // MembershipType
-          pstmtInsertCount += insertMembershipType(pstmtInsert, author);
+      //    pstmtInsertCount += insertMembershipType(pstmtInsert, author);
 
           logger.debug(author);
 
@@ -62,7 +62,7 @@ public class UserFeature {
           Author author) throws Exception {
         pstmtInsert.setInt(1, author.getAuthorId());
         pstmtInsert.setString(2, UserFeatureType.MembershipType.name());
-        pstmtInsert.setString(3, author.getMembershipType());
+        pstmtInsert.setString(3, "0");
         pstmtInsert.addBatch();
 
         return 1;
@@ -70,14 +70,15 @@ public class UserFeature {
 
       private int insertAvgThankPerReply(PreparedStatement pstmtInsert,
           Author author) throws Exception {
+        final double NORM = 12.0;
         double t = (double) author.getThankCount();
         double r = (double) author.getReplyCount();
 
         String ans = "";
         if (r == 0) {
-          ans = "NaN";
+          ans = "0";
         } else {
-          ans = String.format("%.5f", (t / r));
+          ans = String.format("%.5f", (t / r) / NORM);
         }
 
         pstmtInsert.setInt(1, author.getAuthorId());
@@ -90,14 +91,15 @@ public class UserFeature {
 
       private int insertQRRatio(PreparedStatement pstmtInsert, Author author)
           throws Exception {
+        final double NORM = 338.00;
         double q = (double) author.getQuestionCount();
         double r = (double) author.getReplyCount();
 
         String ans = "";
-        if (r == 0) {
-          ans = "NaN";
+        if (q == 0) {
+          ans = "0";
         } else {
-          ans = String.format("%.5f", (q / r));
+          ans = String.format("%.5f", (r / q)/NORM);
         }
 
         pstmtInsert.setInt(1, author.getAuthorId());
@@ -112,7 +114,7 @@ public class UserFeature {
           throws Exception {
         pstmtInsert.setInt(1, author.getAuthorId());
         pstmtInsert.setString(2, UserFeatureType.Gender.name());
-        pstmtInsert.setString(3, author.getGender());
+        pstmtInsert.setString(3, "0");
 
         pstmtInsert.addBatch();
         return 1;

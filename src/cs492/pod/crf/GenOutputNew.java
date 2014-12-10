@@ -7,18 +7,21 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import cs492.pod.db.DBClient;
 import cs492.pod.model.AffectiveFeatureType;
+import cs492.pod.model.DoubleWrapper;
 import cs492.pod.model.StylisticFeatureType;
 import cs492.pod.model.UserFeatureType;
 
-public class GenOutput extends Thread {
-  private final Logger logger = LogManager.getLogger(GenOutput.class
+public class GenOutputNew extends Thread {
+  private final Logger logger = LogManager.getLogger(GenOutputNew.class
       .getSimpleName());
 
   private final String SEP = "\t";
@@ -26,7 +29,7 @@ public class GenOutput extends Thread {
   private final File output;
   private final String drugName;
 
-  public GenOutput(File output, String drugName) {
+  public GenOutputNew(File output, String drugName) {
     this.output = output;
     this.drugName = drugName;
   }
@@ -35,11 +38,6 @@ public class GenOutput extends Thread {
   public void run() {
     try {
       startProcess(this.output, this.drugName);
-
-      
-      
-      //FileSplit fs = new FileSplit(this.output);
-      //fs.start();
     } catch (Exception e) {
       e.printStackTrace();
       logger.error(e);
@@ -47,7 +45,7 @@ public class GenOutput extends Thread {
   }
 
   public void startProcess(File output, final String drugName) throws Exception {
-    logger.info("GenOutput");
+    logger.info("GenOutputNew");
 
     if (output.exists()) {
       throw new Exception("Output file already exists.");
@@ -64,71 +62,48 @@ public class GenOutput extends Thread {
     pstmtSelectSideEffects.setString(1, drugName);
     ResultSet rsSideEffects = pstmtSelectSideEffects.executeQuery();
 
+    Set<String> symptoms = new HashSet<String>();
     while (rsSideEffects.next()) {
-      StringBuilder sb = new StringBuilder();
-      int authorId = rsSideEffects.getInt("author_id");
-      int docId = rsSideEffects.getInt("doc_id");
-      int frequency = rsSideEffects.getInt("frequency");
-      String symptom = rsSideEffects.getString("symptom").trim();
-      String isMoreCommon = rsSideEffects.getString("is_more_common").trim();
-      if (symptom.isEmpty()) {
+      String symptom = rsSideEffects.getString("symptom");
+      if (symptom.trim().isEmpty()) {
         continue;
       }
-
-      // Add basic info
-      sb.append(isMoreCommon).append(SEP);
-
-   // User Trustworthy
-      double userTrustworthy = getUserTrustworthy(con, authorId);
-      
-      // Affective Features
-      getAffectiveFeatures(con, sb, authorId, docId, userTrustworthy);
-
-      // Stylistic Features
-      getStylisticFeatures(con, sb, authorId, docId, userTrustworthy);
-
-      // User Features
-      getUserFeatures(con, sb, authorId, userTrustworthy);
-
-      String outputLine = sb.toString().trim();
-      for (int i = 0; i < frequency; i++) {
-        pw.println(outputLine);
-      }
-      logger.info("------ {} {} {}", authorId, docId, outputLine);
+      symptoms.add(symptom);
     }
-
     rsSideEffects.close();
     pstmtSelectSideEffects.close();
+
+    pstmtSelectSideEffects = con
+        .prepareStatement("SELECT * FROM specific_drug_side_effects WHERE type=? AND symptom=?");
+    for (String symptom : symptoms) {
+      pstmtSelectSideEffects.setString(1, drugName);
+      pstmtSelectSideEffects.setString(2, symptom);
+      ResultSet rsSymptomSideEffects = pstmtSelectSideEffects.executeQuery();
+
+      double pi = 1.0;
+      String isMoreCommon = "N";
+      while (rsSymptomSideEffects.next()) {
+        int authorId = rsSideEffects.getInt("author_id");
+        int docId = rsSideEffects.getInt("doc_id");
+        int frequency = rsSideEffects.getInt("frequency");
+        isMoreCommon = rsSideEffects.getString("is_more_common").trim();
+
+        double sigma = 0.0;
+        sigma += getAffectiveFeatures(con, authorId, docId) * frequency;
+        sigma += getStylisticFeatures(con, authorId, docId) * frequency;
+        sigma += getUserFeatures(con, authorId) * frequency;
+        pi *= Math.exp(sigma);
+      }
+
+      pw.println(isMoreCommon + "\t" + pi);
+      rsSymptomSideEffects.close();
+    }
 
     pw.close();
   }
 
-  private Map<Integer, Double> userTrustworthy = null;
-
-  private double getUserTrustworthy(Connection con, int authorId)
-      throws Exception {
-
-    if (userTrustworthy == null) {
-      userTrustworthy = new HashMap<Integer, Double>();
-      PreparedStatement pstmt = con
-          .prepareStatement("select author_id, sum(IF(is_more_common='Y',1,0)) / count(*) as T from specific_drug_side_effects group by author_id");
-      ResultSet rs = pstmt.executeQuery();
-      while (rs.next()) {
-        userTrustworthy.put(rs.getInt("author_id"), rs.getDouble("T"));
-      }
-      rs.close();
-      pstmt.close();
-    }
-
-    if (userTrustworthy.containsKey(authorId)) {
-      return userTrustworthy.get(authorId);
-    } else {
-      return 0;
-    }
-  }
-
-  private void getAffectiveFeatures(Connection con, StringBuilder sb,
-      int authorId, int docId, double userTrustworthy) throws SQLException {
+  private double getAffectiveFeatures(Connection con, int authorId, int docId)
+      throws SQLException {
     logger.info("Affective Features {} {}", authorId, docId);
     // Affective Features
     AffectiveFeatureType[] features = AffectiveFeatureType.values();
@@ -149,20 +124,22 @@ public class GenOutput extends Thread {
       double frequency = rsAffective.getInt("frequency");
       double length = rsAffective.getInt("length");
 
-      af.put(type, String.format("%.5f", (frequency / length) * userTrustworthy));
+      af.put(type, String.format("%.5f", (frequency / length)));
     }
     rsAffective.close();
     pstmtAffective.close();
 
     // Append to string
+    double ans = 0.0;
     for (AffectiveFeatureType feature : features) {
       String val = af.get(feature.name().replace('_', '-'));
-      sb.append(val).append(SEP);
+      ans += Double.parseDouble(val.trim());
     }
+    return ans;
   }
 
-  private void getStylisticFeatures(Connection con, StringBuilder sb,
-      int authorId, int docId, double userTrustworthy) throws SQLException {
+  private double getStylisticFeatures(Connection con, int authorId, int docId)
+      throws SQLException {
     logger.info("Stylistic Features {} {}", authorId, docId);
     // Stylistic Features
     StylisticFeatureType[] features = StylisticFeatureType.values();
@@ -183,19 +160,21 @@ public class GenOutput extends Thread {
       double value = rsStylistic.getInt("value");
       double length = rsStylistic.getInt("length");
 
-      sf.put(type, String.format("%.5f", (value / length) * userTrustworthy));
+      sf.put(type, String.format("%.5f", (value / length)));
     }
     rsStylistic.close();
     pstmtStylistic.close();
 
     // Append to string
+    double ans = 0.0;
     for (StylisticFeatureType feature : features) {
       String val = sf.get(feature.name().replace('_', ' '));
-      sb.append(val).append(SEP);
+      ans += Double.parseDouble(val.trim());
     }
+    return ans;
   }
 
-  private void getUserFeatures(Connection con, StringBuilder sb, int authorId, double userTrustworthy)
+  private double getUserFeatures(Connection con, int authorId)
       throws SQLException {
     logger.info("User Features {}", authorId);
     // User Features
@@ -214,18 +193,19 @@ public class GenOutput extends Thread {
     while (rsUser.next()) {
       String type = rsUser.getString("type");
       String value = rsUser.getString("value").replace(' ', '_');
-      double v = Double.parseDouble(value);
 
-      uf.put(type, String.format("%.5f", v * userTrustworthy));
+      uf.put(type, value);
     }
     rsUser.close();
     pstmtUser.close();
 
     // Append to string
+    double ans = 0.0;
     for (UserFeatureType feature : features) {
       String val = uf.get(feature.name());
-      sb.append(val).append(SEP);
+      ans = Double.parseDouble(val.trim());
     }
+    return ans;
   }
 
   public static void main(String[] args) throws Exception {
@@ -236,8 +216,8 @@ public class GenOutput extends Thread {
     // Ibuprofen Xanax Flagyl
 
     for (String drugName : drugNames) {
-      GenOutput go = new GenOutput(new File(outputPath + drugName + ".txt"),
-          drugName);
+      GenOutputNew go = new GenOutputNew(new File(outputPath + drugName
+          + ".txt"), drugName);
       go.start();
     }
   }

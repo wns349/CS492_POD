@@ -47,16 +47,13 @@ public class FileSplit extends Thread {
 
     File fTrain = new File(path, drugName + "_train.txt");
     File fTest = new File(path, drugName + "_test.txt");
-    File fAnswer = new File(path, drugName + "_answer.txt");
 
     PrintWriter pwTrain = new PrintWriter(fTrain);
     PrintWriter pwTest = new PrintWriter(fTest);
-    PrintWriter pwAnswer = new PrintWriter(fAnswer);
 
     sc = new BufferedReader(new FileReader(this.file));
 
-    logger.info("{} {} {}", fTrain.getName(), fTest.getName(),
-        fAnswer.getName());
+    logger.info("{} {}", fTrain.getName(), fTest.getName());
 
     int trainLines = (int) (numLines * ratio);
     numLines = 0;
@@ -64,16 +61,13 @@ public class FileSplit extends Thread {
       if (numLines <= trainLines) {
         pwTrain.println(line);
       } else {
-        String[] tokens = line.split("\t", 2);
-        pwTest.println(tokens[1].trim());
-        pwAnswer.println(tokens[0].trim());
+        pwTest.println(line);
       }
       numLines++;
     }
 
     pwTrain.close();
     pwTest.close();
-    pwAnswer.close();
   }
 
   public static void main(String[] args) {
