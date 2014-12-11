@@ -8,5 +8,9 @@
 	<classpathentry kind="lib" path="lib/liblinear-1.94.jar"/>
 	<classpathentry kind="lib" path="lib/junit-4.11.jar"/>
 	<classpathentry kind="lib" path="lib/stanford-postagger-3.4.1.jar" sourcepath="lib/src/stanford-postagger-3.4.1-sources.jar"/>
+	<classpathentry kind="lib" path="lib/jwnl-1.3.3.jar"/>
+	<classpathentry kind="lib" path="lib/opennlp-maxent-3.0.3.jar"/>
+	<classpathentry kind="lib" path="lib/opennlp-tools-1.5.3.jar"/>
+	<classpathentry kind="lib" path="lib/opennlp-uima-1.5.3.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

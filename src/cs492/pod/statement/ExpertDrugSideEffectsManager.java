@@ -3,13 +3,14 @@ package cs492.pod.statement;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import cs492.pod.model.DrugCategory;
 import cs492.pod.model.Severity;
-import cs492.pod.util.StringUtil;
+import edu.stanford.nlp.trees.WordStemmer;
 
 public class ExpertDrugSideEffectsManager {
   private final Logger logger = LogManager
@@ -62,16 +63,17 @@ public class ExpertDrugSideEffectsManager {
           drug = drug.trim();
           DrugCategory category = DrugCategory.getDrugCategory(drug);
           if (category != null) {
-            String[] sideEffectTokens = sideEffects.split("#");
-            for (String sideEffectToken : sideEffectTokens) {
-              sideEffectToken = StringUtil.ltrim(sideEffectToken);
-              sideEffectToken = StringUtil.rtrim(sideEffectToken);
-              if (!sideEffectToken.trim().isEmpty()) {
-                result[category.ordinal()][Severity.getSeverity(severity)
-                    .ordinal()] = sideEffects;
-                isAdded = true;
-              }
-            }
+
+            result[category.ordinal()][Severity.getSeverity(severity).ordinal()] = sideEffects;
+            isAdded = true;
+            // String[] sideEffectTokens = sideEffects.split("#");
+            // for (String sideEffectToken : sideEffectTokens) {
+            // sideEffectToken = StringUtil.ltrim(sideEffectToken);
+            // sideEffectToken = StringUtil.rtrim(sideEffectToken);
+            // if (!sideEffectToken.trim().isEmpty()) {
+            //
+            // }
+            // }
           } else {
             // logger.debug("category is null:" + drug);
           }
